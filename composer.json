@@ -1,0 +1,39 @@
+{
+    "name": "aamant/openmage-rector",
+    "description": "Règles Rector pour migrer les modules Magento 1 / OpenMage vers les nouvelles versions d'OpenMage",
+    "type": "rector-extension",
+    "license": [
+        "OSL-3.0",
+        "AFL-3.0"
+    ],
+    "authors": [
+        {
+            "name": "Arnaud Amant",
+            "email": "contact@arnaudamant.fr"
+        }
+    ],
+    "keywords": ["rector", "openmage", "magento1", "refactoring"],
+    "require": {
+        "php": "^8.2",
+        "rector/rector": "^2.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Aamant\\OpenMageRector\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Aamant\\OpenMageRector\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "scripts": {
+        "test": "phpunit"
+    }
+}
