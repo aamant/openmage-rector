@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Aamant\OpenMageRector\Rector\ClassConstFetch\RemovedEditionConstantRector;
 use Aamant\OpenMageRector\Rector\ClassMethod\AdminhtmlIsAllowedReturnTypeRector;
 use Aamant\OpenMageRector\Rector\MethodCall\RemovedBundlePricesAliasRector;
 use Aamant\OpenMageRector\Rector\MethodCall\RemovedCollectionAttributeAliasRector;
@@ -14,6 +15,7 @@ return static function (RectorConfig $rectorConfig): void {
         AdminhtmlIsAllowedReturnTypeRector::class,
         RemovedBundlePricesAliasRector::class,
         RemovedCollectionAttributeAliasRector::class,
+        RemovedEditionConstantRector::class,
         RemovedEscapeAliasRector::class,
         RemovedPriceDataAliasRector::class,
     ]);
