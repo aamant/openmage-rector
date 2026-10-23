@@ -42,6 +42,7 @@ passer à `withPaths()` la liste des fichiers résolus plutôt que les dossiers.
 | Règle | Effet |
 |---|---|
 | `AdminhtmlIsAllowedReturnTypeRector` | Ajoute `: bool` à `_isAllowed()` dans les descendants de `Mage_Adminhtml_Controller_Action` (OpenMage #5351) et caste en `(bool)` les retours dont le type n'est pas booléen. Les appels `->isAllowed()` ne sont pas castés. |
+| `RemovedBundlePricesAliasRector` | Renomme `getPrices()` et `getPricesDependingOnTax()`, alias retirés de `Mage_Bundle_Model_Product_Price` en OpenMage 20, en `getTotalPrices()`, avec les mêmes arguments. S'applique quand l'objet est un modèle de prix (`Mage_Catalog_Model_Product_Type_Price` ou descendant) ou un appel `->getPriceModel()`, même non typé ; ignore les appels sans argument (`getPrices()` magique de l'attribut configurable) et les classes qui déclarent elles-mêmes ces méthodes. |
 | `RemovedEscapeAliasRector` | Renomme `htmlEscape()` en `escapeHtml()` et `urlEscape()` en `escapeUrl()`, alias retirés de `Mage_Core_Block_Abstract` et `Mage_Core_Helper_Abstract` en 20.17. Renomme aussi quand le type de l'objet est inconnu (`$this` d'un `.phtml`) ; ignore les classes typées hors de ces deux hiérarchies. |
 | `RemovedPriceDataAliasRector` | Remplace `addMinimalPrice()` et `addFinalPrice()`, retirés de `Mage_Catalog_Model_Resource_Product_Collection` en OpenMage 20, par `addPriceData()`, qu'ils ne faisaient qu'appeler, et fusionne les appels enchaînés en un seul `addPriceData()`. S'applique aussi quand le type de la collection est inconnu ou générique (`getCollection()`, `.phtml`) ; ignore les appels avec argument et les classes qui déclarent elles-mêmes ces méthodes. |
 
@@ -55,6 +56,11 @@ passer à `withPaths()` la liste des fichiers résolus plutôt que les dossiers.
 +        return (bool) $helper->getAllowView();
      }
  }
+```
+
+```diff
+-[$minPrice, $maxPrice] = $product->getPriceModel()->getPrices($product);
++[$minPrice, $maxPrice] = $product->getPriceModel()->getTotalPrices($product);
 ```
 
 ```diff
