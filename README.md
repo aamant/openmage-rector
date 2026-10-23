@@ -43,6 +43,7 @@ passer à `withPaths()` la liste des fichiers résolus plutôt que les dossiers.
 |---|---|
 | `AdminhtmlIsAllowedReturnTypeRector` | Ajoute `: bool` à `_isAllowed()` dans les descendants de `Mage_Adminhtml_Controller_Action` (OpenMage #5351) et caste en `(bool)` les retours dont le type n'est pas booléen. Les appels `->isAllowed()` ne sont pas castés. |
 | `RemovedEscapeAliasRector` | Renomme `htmlEscape()` en `escapeHtml()` et `urlEscape()` en `escapeUrl()`, alias retirés de `Mage_Core_Block_Abstract` et `Mage_Core_Helper_Abstract` en 20.17. Renomme aussi quand le type de l'objet est inconnu (`$this` d'un `.phtml`) ; ignore les classes typées hors de ces deux hiérarchies. |
+| `RemovedPriceDataAliasRector` | Remplace `addMinimalPrice()` et `addFinalPrice()`, retirés de `Mage_Catalog_Model_Resource_Product_Collection` en OpenMage 20, par `addPriceData()`, qu'ils ne faisaient qu'appeler, et fusionne les appels enchaînés en un seul `addPriceData()`. S'applique aussi quand le type de la collection est inconnu ou générique (`getCollection()`, `.phtml`) ; ignore les appels avec argument et les classes qui déclarent elles-mêmes ces méthodes. |
 
 ```diff
  class Foo_Adminhtml_BarController extends Mage_Adminhtml_Controller_Action
@@ -59,6 +60,15 @@ passer à `withPaths()` la liste des fichiers résolus plutôt que les dossiers.
 ```diff
 -<a href="<?php echo $this->urlEscape($_item->getUrl()) ?>"><?php echo $this->htmlEscape($_item->getName()) ?></a>
 +<a href="<?php echo $this->escapeUrl($_item->getUrl()) ?>"><?php echo $this->escapeHtml($_item->getName()) ?></a>
+```
+
+```diff
+ $products = $product->getCollection()
+     ->addAttributeToSelect('*')
+-    ->addMinimalPrice()
+-    ->addFinalPrice()
++    ->addPriceData()
+     ->addTaxPercents();
 ```
 
 Les templates ne sont traités que s'ils sont passés à Rector : `->withFileExtensions(['php', 'phtml'])` et les
