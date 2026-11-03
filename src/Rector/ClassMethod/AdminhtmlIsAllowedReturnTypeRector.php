@@ -30,7 +30,7 @@ use Symplify\RuleDocGenerator\ValueObject\RuleDefinition;
  */
 final class AdminhtmlIsAllowedReturnTypeRector extends AbstractRector
 {
-    private const PARENT_CLASS = 'Mage_Adminhtml_Controller_Action';
+    private const string PARENT_CLASS = 'Mage_Adminhtml_Controller_Action';
 
     public function getRuleDefinition(): RuleDefinition
     {

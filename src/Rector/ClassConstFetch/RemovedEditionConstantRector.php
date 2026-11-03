@@ -18,7 +18,7 @@ use Symplify\RuleDocGenerator\ValueObject\RuleDefinition;
 final class RemovedEditionConstantRector extends AbstractRector
 {
     // Valeurs des constantes dans Mage 1.9 / OpenMage 19.
-    private const VALUES = [
+    private const array VALUES = [
         'EDITION_COMMUNITY' => 'Community',
         'EDITION_ENTERPRISE' => 'Enterprise',
         'EDITION_PROFESSIONAL' => 'Professional',

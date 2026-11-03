@@ -19,12 +19,12 @@ use Symplify\RuleDocGenerator\ValueObject\RuleDefinition;
  */
 final class RemovedEscapeAliasRector extends AbstractRector
 {
-    private const RENAMES = [
+    private const array RENAMES = [
         'htmlEscape' => 'escapeHtml',
         'urlEscape' => 'escapeUrl',
     ];
 
-    private const CORE_CLASSES = [
+    private const array CORE_CLASSES = [
         'Mage_Core_Block_Abstract',
         'Mage_Core_Helper_Abstract',
     ];

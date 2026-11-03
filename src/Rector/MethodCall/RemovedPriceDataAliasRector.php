@@ -19,9 +19,9 @@ use Symplify\RuleDocGenerator\ValueObject\RuleDefinition;
  */
 final class RemovedPriceDataAliasRector extends AbstractRector
 {
-    private const ALIASES = ['addMinimalPrice', 'addFinalPrice'];
+    private const array ALIASES = ['addMinimalPrice', 'addFinalPrice'];
 
-    private const TARGET = 'addPriceData';
+    private const string TARGET = 'addPriceData';
 
     public function __construct(
         private readonly ReflectionProvider $reflectionProvider,

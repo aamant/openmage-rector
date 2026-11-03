@@ -19,9 +19,9 @@ use Symplify\RuleDocGenerator\ValueObject\RuleDefinition;
  */
 final class RemovedCollectionAttributeAliasRector extends AbstractRector
 {
-    private const ALIAS = 'getCollectionAttribute';
+    private const string ALIAS = 'getCollectionAttribute';
 
-    private const TARGET = 'getAttribute';
+    private const string TARGET = 'getAttribute';
 
     public function __construct(
         private readonly ReflectionProvider $reflectionProvider,

@@ -19,11 +19,11 @@ use Symplify\RuleDocGenerator\ValueObject\RuleDefinition;
  */
 final class RemovedBundlePricesAliasRector extends AbstractRector
 {
-    private const ALIASES = ['getPrices', 'getPricesDependingOnTax'];
+    private const array ALIASES = ['getPrices', 'getPricesDependingOnTax'];
 
-    private const TARGET = 'getTotalPrices';
+    private const string TARGET = 'getTotalPrices';
 
-    private const PRICE_MODEL_CLASS = 'Mage_Catalog_Model_Product_Type_Price';
+    private const string PRICE_MODEL_CLASS = 'Mage_Catalog_Model_Product_Type_Price';
 
     public function __construct(
         private readonly ReflectionProvider $reflectionProvider,
