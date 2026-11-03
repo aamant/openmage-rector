@@ -18,7 +18,7 @@ use Aamant\OpenMageRector\Set\OpenMageSetList;
 use Rector\Config\RectorConfig;
 
 return RectorConfig::configure()
-    ->withSets([OpenMageSetList::OPENMAGE_20_17])
+    ->withSets([OpenMageSetList::OPENMAGE_20_17, OpenMageSetList::OPENMAGE_20_19])
     // Classes du core et de lib/ indexées pour résoudre l'héritage des modules.
     ->withAutoloadPaths([
         __DIR__ . '/htdocs/app/code/core',
@@ -96,6 +96,66 @@ n'est plus appelée par le core.
 Les templates ne sont traités que s'ils sont passés à Rector : `->withFileExtensions(['php', 'phtml'])` et les
 fichiers de `app/design` dans `withPaths()`. Les autres règles de la configuration s'y appliquent aussi.
 
+### OpenMage 20.19 — `OpenMageSetList::OPENMAGE_20_19`
+
+OpenMage 20.19 marque environ 390 méthodes, fonctions et constantes de l'attribut natif `#[Deprecated]`.
+Dès PHP 8.4, chaque appel émet un `E_USER_DEPRECATED`, que le gestionnaire d'erreurs d'OpenMage ne filtre
+pas : exception en mode développeur, erreur journalisée sinon. Le set ne remplace que les dépréciations
+dont le remplaçant a un comportement identique (la méthode dépréciée ne fait que l'appeler, ou la constante
+a la même valeur).
+
+Les règles de méthodes ne réécrivent un appel que si la méthode appelée est la déclaration dépréciée du
+core : un objet typé dont la classe redéfinit la méthode, une classe hors core homonyme ou un objet non
+typé (`$this` d'un `.phtml`, retour de `Mage::getModel()`) sont laissés tels quels. `parent::`, `self::`
+et `static::` sont traités. Dans un fichier à namespace, les noms produits sont qualifiés (`\Mage`).
+
+| Règle | Remplacements du set |
+|---|---|
+| `DeprecatedFunctionToStaticCallRector` | `now()` → `Varien_Date::now()` |
+| `DeprecatedTranslateFunctionRector` | `__(…)` → `Mage::app()->getTranslator()->translate([…])`, ce qu'exécutait `__()` : sans portée de module, contrairement à `$this->__()` ou `Mage::helper('x')->__()` |
+| `DeprecatedMethodRenameRector` | `getSaveUrl()` → `getFormActionUrl()` (`Mage_Adminhtml_Block_Widget_Form_Container`), `getGridUrl()` → `getAbsoluteGridUrl()` (`Mage_Adminhtml_Block_Widget_Grid`), `_inludeControllerClass()` → `_includeControllerClass()` (`Mage_Core_Controller_Varien_Router_Standard`), `submit()` → `submitOrder()` (`Mage_Sales_Model_Service_Quote`), `chechAllowedExtension()` → `checkAllowedExtension()` (`Varien_File_Uploader`) |
+| `DeprecatedGetterToGetDataRector` | `getIsGlobal()` → `getData('is_global')` (`Mage_Eav_Model_Entity_Attribute_Abstract` ; celui de `Mage_Catalog_Model_Resource_Eav_Attribute` n'est pas déprécié), `getTaxAmount()` / `getBaseTaxAmount()` → `getData('tax_amount')` / `getData('base_tax_amount')` (`Mage_Sales_Model_Quote_Item_Abstract`) |
+| `DeprecatedMethodToStaticCallRector` | `Mage_Core_Model_App::isInstalled()` → `Mage::isInstalled()`, `Mage_Customer_AccountController::_getModel()` → `Mage::getModel()`, `_getHelperInstance()` / `_getHelperModel()` → `Mage::helper()` et `_getSingletonModel()` → `Mage::getSingleton()` (`Mage_Wishlist_Helper_Data`, `Mage_Adminhtml_Tax_RuleController`) |
+| `DeprecatedClassConstantRector` | `Mage_Core_Helper_Data::XML_PATH_DEV_LOG_*` → `Mage_Core_Helper_Log::XML_PATH_DEV_LOG_*`, `Mage_Adminhtml_Block_Dashboard::XML_PATH_ENABLE_CHARTS` → `Mage_Adminhtml_Helper_Dashboard_Data::XML_PATH_ENABLE_CHARTS`, `Mage_Core_Model_Locale::XML_PATH_DEFAULT_COUNTRY` et `Mage_Paypal_Model_System_Config_Backend_MerchantCountry::XML_PATH_COUNTRY_DEFAULT` → `Mage_Core_Helper_Data::XML_PATH_DEFAULT_COUNTRY`, `Mage_Newsletter_Model_Subscriber::XML_PATH_SENDING_SET_RETURN_PATH` → `Mage_Core_Model_Email_Template::XML_PATH_SENDING_SET_RETURN_PATH`, `Mage_Customer_Model_Customer::MINIMUM_PASSWORD_LENGTH` → `Mage_Core_Model_App::ABSOLUTE_MIN_PASSWORD_LENGTH`, `Varien_File_Uploader::TMP_NAME_EMPTY` → `UPLOAD_ERR_NO_FILE` |
+
+```diff
+-$order->setUpdatedAt(now());
+-Mage::getSingleton('adminhtml/session')->addSuccess(__('Personal data has been erased.'));
++$order->setUpdatedAt(Varien_Date::now());
++Mage::getSingleton('adminhtml/session')->addSuccess(Mage::app()->getTranslator()->translate(['Personal data has been erased.']));
+```
+
+```diff
+ class Foo_Bar_Model_Attribute extends Mage_Eav_Model_Entity_Attribute
+ {
+     public function isGlobal()
+     {
+-        return $this->getIsGlobal() == 1;
++        return $this->getData('is_global') == 1;
+     }
+ }
+```
+
+Les règles sont configurables pour d'autres dépréciations, avec les objets de `Aamant\OpenMageRector\ValueObject` :
+
+```php
+use Aamant\OpenMageRector\Rector\MethodCall\DeprecatedMethodRenameRector;
+use Aamant\OpenMageRector\ValueObject\MethodRename;
+
+return RectorConfig::configure()
+    ->withConfiguredRule(DeprecatedMethodRenameRector::class, [
+        new MethodRename('Mage_Adminhtml_Block_Widget_Grid', 'getGridUrl', 'getAbsoluteGridUrl'),
+    ]);
+```
+
+Restent à corriger à la main, leur remplaçant changeant le retour ou les arguments : `getFormated()` →
+`format()`, `Mage_Core_Model_Config::getBaseDir()` → `getOptions()->getDir()`,
+`Mage_Core_Model_Store::isCurrentlySecure()` → `Mage::app()->isCurrentlySecure()`, `addStatusToHistory()` →
+`addStatusHistoryComment()`, `addVisibleIn*FilterToCollection()` → `$collection->setVisibility()`,
+`Mage_Adminhtml_Block_Store_Switcher::get*Collection()`, `getKeyList()` → `getIndexList()`,
+`toOptionArray()` → `toOptionIdArray()` (pages CMS), `export()` → `exportFile()`. Les autres dépréciations
+n'ont pas de remplaçant.
+
 ## Tests
 
 ```bash
@@ -105,3 +165,6 @@ composer test
 
 Une règle = un dossier sous `tests/Rector/`, avec ses fixtures `*.php.inc` (avant / `-----` / après ;
 sans séparateur, le fichier ne doit pas changer) et les classes du core simulées dans `Source/`.
+
+Les classes simulées sont partagées entre les tests d'un même processus : deux `Source/` qui déclarent une
+classe de même nom doivent la déclarer à l'identique.
