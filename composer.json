@@ -14,7 +14,7 @@
     ],
     "keywords": ["rector", "openmage", "magento1", "refactoring"],
     "require": {
-        "php": "^8.2",
+        "php": "^8.3",
         "rector/rector": "^2.0"
     },
     "require-dev": {
