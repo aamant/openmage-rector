@@ -136,6 +136,25 @@ et `static::` sont traités. Dans un fichier à namespace, les noms produits son
  }
 ```
 
+Trois règles traitent des appels dont la valeur de retour change ou disparaît : elles ne s'appliquent
+qu'à un appel qui forme une instruction seule (`$x->methode(…);`), jamais quand le retour est utilisé ou
+enchaîné. Ces méthodes n'ayant pas d'homonyme connu, un objet non typé (`Mage::getSingleton('…')`, retour de
+`Mage::getModel()->load()`) est accepté ; seule une classe qui déclare elle-même la méthode est exclue.
+
+| Règle | Remplacement |
+|---|---|
+| `DeprecatedAddStatusToHistoryRector` | `addStatusToHistory($status, $comment, $notified)` → `addStatusHistoryComment($comment, $status)->setIsCustomerNotified($notified)` (`Mage_Sales_Model_Order`), ce qu'exécutait la méthode dépréciée. Arguments absents : `$comment = ''`, `$notified = false`. Ignore les arguments nommés ou décompressés. Les deux premiers arguments sont évalués dans l'ordre inverse. |
+| `DeprecatedNoopProductStatusFilterRector` | Supprime `addVisibleFilterToCollection()` et `addSaleableFilterToCollection()` (`Mage_Catalog_Model_Product_Status`), qui ne filtrent rien. L'objet et l'argument doivent être sans effet de bord : variable, propriété, ou `Mage::getSingleton()` / `Mage::getModel()` d'un alias littéral. Une variable devenue inutile ou un `if` resté vide ne sont pas retirés (set `DEAD_CODE` de Rector). |
+| `DeprecatedVisibilityFilterRector` | `addVisibleIn{Catalog,Search,Site}FilterToCollection($collection)` → `$collection->setVisibility(Mage_Catalog_Model_Product_Visibility::getVisibleIn{Catalog,Search,Site}Ids())` (`Mage_Catalog_Model_Product_Visibility`). Les méthodes `getVisibleIn*Ids()` sont statiques et le core les appelle par `self::`. L'objet doit être sans effet de bord, comme ci-dessus. |
+
+```diff
+-$order->addStatusToHistory($order->getStatus(), $comment, true);
+-Mage::getSingleton('catalog/product_status')->addVisibleFilterToCollection($collection);
+-Mage::getSingleton('catalog/product_visibility')->addVisibleInCatalogFilterToCollection($collection);
++$order->addStatusHistoryComment($comment, $order->getStatus())->setIsCustomerNotified(true);
++$collection->setVisibility(Mage_Catalog_Model_Product_Visibility::getVisibleInCatalogIds());
+```
+
 Les règles sont configurables pour d'autres dépréciations, avec les objets de `Aamant\OpenMageRector\ValueObject` :
 
 ```php
@@ -150,8 +169,8 @@ return RectorConfig::configure()
 
 Restent à corriger à la main, leur remplaçant changeant le retour ou les arguments : `getFormated()` →
 `format()`, `Mage_Core_Model_Config::getBaseDir()` → `getOptions()->getDir()`,
-`Mage_Core_Model_Store::isCurrentlySecure()` → `Mage::app()->isCurrentlySecure()`, `addStatusToHistory()` →
-`addStatusHistoryComment()`, `addVisibleIn*FilterToCollection()` → `$collection->setVisibility()`,
+`Mage_Core_Model_Store::isCurrentlySecure()` → `Mage::app()->isCurrentlySecure()`, les appels à
+`addStatusToHistory()` ou aux filtres de collection dont le retour est utilisé,
 `Mage_Adminhtml_Block_Store_Switcher::get*Collection()`, `getKeyList()` → `getIndexList()`,
 `toOptionArray()` → `toOptionIdArray()` (pages CMS), `export()` → `exportFile()`. Les autres dépréciations
 n'ont pas de remplaçant.
