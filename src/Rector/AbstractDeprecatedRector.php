@@ -8,12 +8,26 @@ declare(strict_types=1);
 namespace Aamant\OpenMageRector\Rector;
 
 use PhpParser\Node;
+use PhpParser\Node\Expr;
+use PhpParser\Node\Expr\ArrayDimFetch;
+use PhpParser\Node\Expr\CallLike;
+use PhpParser\Node\Expr\ClassConstFetch;
+use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\NullsafeMethodCall;
+use PhpParser\Node\Expr\NullsafePropertyFetch;
+use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Expr\StaticCall;
+use PhpParser\Node\Expr\StaticPropertyFetch;
+use PhpParser\Node\Expr\Variable;
+use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
 use PhpParser\Node\Name\FullyQualified;
+use PhpParser\Node\Scalar;
+use PhpParser\Node\Scalar\InterpolatedString;
+use PhpParser\Node\Scalar\String_;
+use PhpParser\Node\VarLikeIdentifier;
 use PHPStan\Analyser\Scope;
 use PHPStan\Reflection\ClassReflection;
 use PHPStan\Reflection\ReflectionProvider;
@@ -77,6 +91,94 @@ abstract class AbstractDeprecatedRector extends AbstractRector
         }
 
         return false;
+    }
+
+    /**
+     * Variante tolérante de callsDeprecatedMethod() pour les méthodes sans homonyme connu : un objet non typé
+     * (retour de Mage::getSingleton()) est accepté, seule une classe qui redéclare la méthode est exclue.
+     */
+    protected function mayCallDeprecatedMethod(MethodCall|NullsafeMethodCall|StaticCall $node, string $className): bool
+    {
+        if ($node instanceof StaticCall) {
+            return $this->callsDeprecatedMethod($node, $className);
+        }
+
+        $methodName = $this->getName($node->name);
+        if ($methodName === null) {
+            return false;
+        }
+
+        foreach ($this->resolveCalledClassNames($node) as $calledClassName) {
+            if (!$this->reflectionProvider->hasClass($calledClassName)) {
+                continue;
+            }
+
+            $classReflection = $this->reflectionProvider->getClass($calledClassName);
+            if ($classReflection->hasNativeMethod($methodName)
+                && !$this->isClass($classReflection->getNativeMethod($methodName)->getDeclaringClass(), $className)
+            ) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Valeurs des arguments, ou null si l'appel utilise un argument nommé, une décompression ou la syntaxe `f(...)`.
+     *
+     * @return Expr[]|null
+     */
+    protected function getPositionalArgValues(CallLike $node): ?array
+    {
+        if ($node->isFirstClassCallable()) {
+            return null;
+        }
+
+        $values = [];
+        foreach ($node->getArgs() as $arg) {
+            if ($arg->unpack || $arg->name !== null) {
+                return null;
+            }
+
+            $values[] = $arg->value;
+        }
+
+        return $values;
+    }
+
+    /**
+     * Expression que l'on peut supprimer sans perdre d'effet : variable, propriété, constante, scalaire,
+     * ou Mage::getSingleton() / Mage::getModel() d'un alias littéral.
+     */
+    protected function isDroppable(Expr $expr): bool
+    {
+        return match (true) {
+            $expr instanceof Variable => is_string($expr->name),
+            $expr instanceof PropertyFetch, $expr instanceof NullsafePropertyFetch => $expr->name instanceof Identifier
+                && $this->isDroppable($expr->var),
+            $expr instanceof StaticPropertyFetch => $expr->class instanceof Name
+                && $expr->name instanceof VarLikeIdentifier,
+            $expr instanceof ArrayDimFetch => $expr->dim instanceof Expr && $this->isDroppable($expr->var)
+                && $this->isDroppable($expr->dim),
+            $expr instanceof Scalar => !$expr instanceof InterpolatedString,
+            $expr instanceof ClassConstFetch, $expr instanceof ConstFetch => true,
+            $expr instanceof StaticCall => $this->isMageFactoryCall($expr),
+            default => false,
+        };
+    }
+
+    protected function isMageFactoryCall(StaticCall $node): bool
+    {
+        if (!$node->class instanceof Name || strcasecmp(ltrim($node->class->toString(), '\\'), 'Mage') !== 0
+            || !$this->isNames($node->name, ['getSingleton', 'getModel'])
+        ) {
+            return false;
+        }
+
+        $args = $this->getPositionalArgValues($node);
+
+        return $args !== null && count($args) === 1 && $args[0] instanceof String_;
     }
 
     protected function resolveClassName(Name $name, Node $node): ?string
