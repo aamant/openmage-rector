@@ -7,6 +7,7 @@ use Aamant\OpenMageRector\Rector\ClassMethod\AdminhtmlIsAllowedReturnTypeRector;
 use Aamant\OpenMageRector\Rector\MethodCall\RemovedBundlePricesAliasRector;
 use Aamant\OpenMageRector\Rector\MethodCall\RemovedCollectionAttributeAliasRector;
 use Aamant\OpenMageRector\Rector\MethodCall\RemovedEscapeAliasRector;
+use Aamant\OpenMageRector\Rector\MethodCall\RemovedOutputEnabledAliasRector;
 use Aamant\OpenMageRector\Rector\MethodCall\RemovedPriceDataAliasRector;
 use Rector\Config\RectorConfig;
 
@@ -17,6 +18,7 @@ return static function (RectorConfig $rectorConfig): void {
         RemovedCollectionAttributeAliasRector::class,
         RemovedEditionConstantRector::class,
         RemovedEscapeAliasRector::class,
+        RemovedOutputEnabledAliasRector::class,
         RemovedPriceDataAliasRector::class,
     ]);
 };

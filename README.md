@@ -46,6 +46,7 @@ passer à `withPaths()` la liste des fichiers résolus plutôt que les dossiers.
 | `RemovedCollectionAttributeAliasRector` | Renomme `getCollectionAttribute()`, retiré de `Mage_Eav_Model_Config` en OpenMage 20, en `getAttribute()`. S'applique aussi sur un objet non typé (`Mage::getSingleton('eav/config')`) ; ignore les appels qui n'ont pas deux arguments et les classes qui déclarent elles-mêmes la méthode. En OpenMage 20, `getAttribute()` renvoie un modèle vide, et non `null`, pour un attribut inconnu. |
 | `RemovedEditionConstantRector` | Remplace les constantes `Mage::EDITION_*`, supprimées en OpenMage 20, par leur valeur (`'Community'`, `'Enterprise'`, `'Professional'`, `'Go'`). `Mage::getEdition()` renvoie toujours `'Community'`. |
 | `RemovedEscapeAliasRector` | Renomme `htmlEscape()` en `escapeHtml()` et `urlEscape()` en `escapeUrl()`, alias retirés de `Mage_Core_Block_Abstract` et `Mage_Core_Helper_Abstract` en 20.17. Renomme aussi quand le type de l'objet est inconnu (`$this` d'un `.phtml`) ; ignore les classes typées hors de ces deux hiérarchies. |
+| `RemovedOutputEnabledAliasRector` | Renomme `isOutputEnabled()`, retiré de `Mage_Adminhtml_Block_Template` en 20.17, en `isModuleOutputEnabled()` de `Mage_Core_Block_Abstract`, qu'il ne faisait qu'appeler, avec le même argument. Renomme aussi quand le type de l'objet est inconnu (`$this` d'un `.phtml`) ; ignore les classes typées hors de `Mage_Core_Block_Abstract` et celles qui déclarent elles-mêmes `isOutputEnabled()`. |
 | `RemovedPriceDataAliasRector` | Remplace `addMinimalPrice()` et `addFinalPrice()`, retirés de `Mage_Catalog_Model_Resource_Product_Collection` en OpenMage 20, par `addPriceData()`, qu'ils ne faisaient qu'appeler, et fusionne les appels enchaînés en un seul `addPriceData()`. S'applique aussi quand le type de la collection est inconnu ou générique (`getCollection()`, `.phtml`) ; ignore les appels avec argument et les classes qui déclarent elles-mêmes ces méthodes. |
 
 ```diff
@@ -78,6 +79,13 @@ passer à `withPaths()` la liste des fichiers résolus plutôt que les dossiers.
 ```diff
 -<a href="<?php echo $this->urlEscape($_item->getUrl()) ?>"><?php echo $this->htmlEscape($_item->getName()) ?></a>
 +<a href="<?php echo $this->escapeUrl($_item->getUrl()) ?>"><?php echo $this->escapeHtml($_item->getName()) ?></a>
+```
+
+```diff
+-if (!$this->isOutputEnabled('Mage_GiftMessage')) {
++if (!$this->isModuleOutputEnabled('Mage_GiftMessage')) {
+     return '';
+ }
 ```
 
 ```diff
