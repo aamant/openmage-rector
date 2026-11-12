@@ -6,6 +6,7 @@
 declare(strict_types=1);
 
 use Aamant\OpenMageRector\Rector\ClassConstFetch\DeprecatedClassConstantRector;
+use Aamant\OpenMageRector\Rector\ClassMethod\FormContainerSaveUrlOverrideRector;
 use Aamant\OpenMageRector\Rector\Expression\DeprecatedAddStatusToHistoryRector;
 use Aamant\OpenMageRector\Rector\Expression\DeprecatedNoopProductStatusFilterRector;
 use Aamant\OpenMageRector\Rector\Expression\DeprecatedVisibilityFilterRector;
@@ -27,6 +28,7 @@ return static function (RectorConfig $rectorConfig): void {
     $rectorConfig->rule(DeprecatedAddStatusToHistoryRector::class);
     $rectorConfig->rule(DeprecatedNoopProductStatusFilterRector::class);
     $rectorConfig->rule(DeprecatedVisibilityFilterRector::class);
+    $rectorConfig->rule(FormContainerSaveUrlOverrideRector::class);
 
     $rectorConfig->ruleWithConfiguration(DeprecatedFunctionToStaticCallRector::class, [
         new FunctionToStaticCall('now', 'Varien_Date', 'now'),

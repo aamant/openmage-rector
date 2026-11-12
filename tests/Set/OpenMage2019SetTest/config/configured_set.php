@@ -9,4 +9,5 @@ use Aamant\OpenMageRector\Set\OpenMageSetList;
 use Rector\Config\RectorConfig;
 
 return RectorConfig::configure()
-    ->withSets([OpenMageSetList::OPENMAGE_20_19]);
+    ->withSets([OpenMageSetList::OPENMAGE_20_19])
+    ->withAutoloadPaths([__DIR__ . '/../../../Rector/ClassMethod/FormContainerSaveUrlOverrideRector/Source']);
